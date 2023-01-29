@@ -1,8 +1,9 @@
 package stasiek.wojcik.wordletrainingproject.security;
 
 import stasiek.wojcik.wordletrainingproject.entity.Role;
+import stasiek.wojcik.wordletrainingproject.entity.Token;
 import stasiek.wojcik.wordletrainingproject.entity.User;
-import stasiek.wojcik.wordletrainingproject.entity.RegistrationForm;
+import stasiek.wojcik.wordletrainingproject.entity.UserCredentialsForm;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ public class AuthenticationService {
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
 
-    public boolean register(RegistrationForm request) {
+    public boolean register(UserCredentialsForm request) {
         var user = new User(request.getUsername(), passwordEncoder.encode(request.getPassword()), Role.USER);
         try {
             repository.save(user);
@@ -36,10 +37,12 @@ public class AuthenticationService {
         }
     }
 
-    public String authenticate(RegistrationForm request) {
+    public Token authenticate(UserCredentialsForm request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         var user = repository.findUserByUsername(request.getUsername());
-        return user.map(jwtTokenService::generateToken).orElse(null);
+        return user
+                .map(existingUser -> new Token(jwtTokenService.generateToken(existingUser)))
+                .orElse(null);
     }
 }

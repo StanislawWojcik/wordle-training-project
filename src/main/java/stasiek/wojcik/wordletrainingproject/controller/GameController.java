@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import stasiek.wojcik.wordletrainingproject.entity.GuessRequest;
+import stasiek.wojcik.wordletrainingproject.entity.Token;
 import stasiek.wojcik.wordletrainingproject.entity.UserCredentialsForm;
 import stasiek.wojcik.wordletrainingproject.security.AuthenticationService;
 import stasiek.wojcik.wordletrainingproject.service.GameService;
@@ -28,14 +29,14 @@ public class GameController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<Object> registerNewUser(@RequestBody UserCredentialsForm userCredentialsForm) {
+    public ResponseEntity<String> registerNewUser(@RequestBody UserCredentialsForm userCredentialsForm) {
         if (authenticationService.register(userCredentialsForm)) {
             return new ResponseEntity<>("User registered.", HttpStatus.OK);
         } else return new ResponseEntity<>("Username already exists.", HttpStatus.CONFLICT);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> authenticateUser(@RequestBody UserCredentialsForm userCredentialsForm) {
+    public ResponseEntity<Token> authenticateUser(@RequestBody UserCredentialsForm userCredentialsForm) {
         var token = authenticationService.authenticate(userCredentialsForm);
         return new ResponseEntity<>(token, HttpStatus.OK);
     }
