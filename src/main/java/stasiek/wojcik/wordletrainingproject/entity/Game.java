@@ -1,22 +1,22 @@
 package stasiek.wojcik.wordletrainingproject.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.Document;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Map;
 
 @Data
+@Builder
 @Document
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Game {
 
     private String word;
     private int attemptsCounter;
-    @NonNull
     private Map<Character, LetterResult> keyboard;
     private SessionStatus status;
 

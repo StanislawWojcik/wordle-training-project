@@ -27,10 +27,13 @@ public class GameService {
 
     public void startNewGame(String username) {
         var user = repository.findUserByUsername(username).orElseThrow();
-        var game = new Game(generateKeyboardMap());
-        // TODO: need to implement 5-character word generator instead of hardcode
-        game.setWord("kayak");
-        game.setStatus(SessionStatus.IN_PROGRESS);
+        var game = Game.builder()
+                .attemptsCounter(0)
+                .keyboard(generateKeyboardMap())
+                // TODO: need to implement 5-character word generator instead of hardcode
+                .word("kayak")
+                .status(SessionStatus.IN_PROGRESS)
+                .build();
         user.setGame(game);
         repository.save(user);
     }
