@@ -1,9 +1,5 @@
 package stasiek.wojcik.wordletrainingproject.entity;
 
-import lombok.Data;
+public record GuessRequest(String guess) {
 
-@Data
-public class GuessRequest {
-
-    private String guess;
 }

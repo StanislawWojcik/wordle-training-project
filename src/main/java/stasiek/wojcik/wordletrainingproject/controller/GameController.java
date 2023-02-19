@@ -51,10 +51,10 @@ public class GameController {
 
     @PostMapping("/guess")
     public ResponseEntity<Object> guess(@RequestBody GuessRequest guessRequest, Principal principal) {
-        if (!isGuessFormatCorrect(guessRequest.getGuess())) {
+        if (!isGuessFormatCorrect(guessRequest.guess())) {
             return new ResponseEntity<>("Incorrect input format", HttpStatus.UNPROCESSABLE_ENTITY);
         }
-        var guessResponse = gameService.guess(principal.getName(), guessRequest.getGuess());
+        var guessResponse = gameService.guess(principal.getName(), guessRequest.guess());
         if (guessResponse != null) {
             return new ResponseEntity<>(guessResponse, HttpStatus.OK);
         } else return new ResponseEntity<>("Game over! Too many attempts.", HttpStatus.UNPROCESSABLE_ENTITY);
