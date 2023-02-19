@@ -26,7 +26,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public boolean register(UserCredentialsForm request) {
-        var user = new User(request.getUsername(), passwordEncoder.encode(request.getPassword()), Role.USER);
+        var user = new User(request.username(), passwordEncoder.encode(request.password()), Role.USER);
         try {
             repository.save(user);
             logger.info("New user '" + user.getUsername() + "' added to database.");
@@ -39,8 +39,8 @@ public class AuthenticationService {
 
     public Token authenticate(UserCredentialsForm request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        var user = repository.findUserByUsername(request.getUsername());
+                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        var user = repository.findUserByUsername(request.username());
         return user
                 .map(existingUser -> new Token(jwtTokenService.generateToken(existingUser)))
                 .orElse(null);

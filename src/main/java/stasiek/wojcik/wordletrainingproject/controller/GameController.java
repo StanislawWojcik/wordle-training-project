@@ -44,8 +44,9 @@ public class GameController {
 
     // TODO: provide proper endpoint for starting a new game
     @PostMapping("/startGame")
-    public String startGame() {
-        return "Yes, it works.";
+    public ResponseEntity<String> startGame(Principal principal) {
+        gameService.startNewGame(principal.getName());
+        return new ResponseEntity<>("New game started.", HttpStatus.OK);
     }
 
     @PostMapping("/guess")
