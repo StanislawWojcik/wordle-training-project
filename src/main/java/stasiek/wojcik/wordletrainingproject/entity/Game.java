@@ -16,6 +16,7 @@ import java.util.Map;
 public class Game {
 
     private String word;
+    private String lastGuess;
     private int attemptsCounter;
     private Map<Character, LetterResult> keyboard;
     private SessionStatus status;
@@ -26,7 +27,6 @@ public class Game {
     }
 
     public boolean isGameValid() {
-        return attemptsCounter < 6 && status.equals(SessionStatus.IN_PROGRESS);
+        return status.equals(SessionStatus.IN_PROGRESS);
     }
-
 }

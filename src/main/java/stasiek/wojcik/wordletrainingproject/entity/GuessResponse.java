@@ -9,7 +9,4 @@ import java.util.Map;
 public record GuessResponse(int attempts,
                             SessionStatus status,
                             List<LetterGuessResult> guessLetters,
-                            Map<Character, LetterResult> keyboard) {
-
-
-}
+                            Map<Character, LetterResult> keyboard) {}

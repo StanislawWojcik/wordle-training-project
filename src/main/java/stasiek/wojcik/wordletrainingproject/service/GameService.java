@@ -41,12 +41,15 @@ public class GameService {
     public GuessResponse guess(String username, String guess) {
         var user = repository.findUserByUsername(username).orElseThrow();
         var game = user.getGame();
-        if (game.isGameValid()) {
+        List<LetterGuessResult> letterGuessResults;
+        if (game != null && game.isGameValid()) {
             game.incrementAttemptsCounter();
-            List<LetterGuessResult> letterGuessResults = processGuess(game, guess);
+            letterGuessResults = processGuess(game, guess);
             repository.save(user);
-            return new GuessResponse(game.getAttemptsCounter(), game.getStatus(), letterGuessResults, game.getKeyboard());
+        } else if (game != null && !game.isGameValid()) {
+            letterGuessResults = processGuess(game, game.getLastGuess());
         } else return null;
+        return new GuessResponse(game.getAttemptsCounter(), game.getStatus(), letterGuessResults, game.getKeyboard());
     }
 
     private List<LetterGuessResult> processGuess(Game game, String guess) {
@@ -64,12 +67,15 @@ public class GameService {
             }
         }
         updateStatusForWin(game, guess);
+        game.setLastGuess(guess);
         return resultList;
     }
 
     private void updateStatusForWin(Game game, String guess) {
         if (game.getWord().equals(guess)) {
             game.setStatus(SessionStatus.WIN);
+        } else if (game.getAttemptsCounter() == 6) {
+            game.setStatus(SessionStatus.FAILED);
         }
     }
 
