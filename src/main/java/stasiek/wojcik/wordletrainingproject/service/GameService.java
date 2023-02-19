@@ -52,11 +52,7 @@ public class GameService {
     private List<LetterGuessResult> processGuess(Game game, String guess) {
         List<LetterGuessResult> resultList = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            if (game.getWord().equals(guess)) {
-                updateKeyboard(guess.charAt(i), game.getKeyboard(), LetterResult.CORRECT);
-                resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), LetterResult.CORRECT));
-            }
-            else if (game.getWord().charAt(i) == guess.charAt(i)) {
+            if (game.getWord().charAt(i) == guess.charAt(i)) {
                 updateKeyboard(guess.charAt(i), game.getKeyboard(), LetterResult.CORRECT);
                 resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), LetterResult.CORRECT));
             } else if (game.getWord().contains(String.valueOf(guess.charAt(i)))) {
@@ -67,7 +63,6 @@ public class GameService {
                 resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), LetterResult.ABSENT));
             }
         }
-        // TODO: need to provide better game status update
         updateStatusForWin(game, guess);
         return resultList;
     }

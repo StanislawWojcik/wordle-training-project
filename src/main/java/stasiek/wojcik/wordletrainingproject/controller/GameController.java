@@ -57,8 +57,7 @@ public class GameController {
         var guessResponse = gameService.guess(principal.getName(), guessRequest.guess());
         if (guessResponse != null) {
             return new ResponseEntity<>(guessResponse, HttpStatus.OK);
-        } else return new ResponseEntity<>("Game over! Too many attempts.", HttpStatus.UNPROCESSABLE_ENTITY);
-
+        } else return new ResponseEntity<>("No valid game recognized.", HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     // TODO: pay attention to case sensitive checks
