@@ -25,7 +25,7 @@ public class AuthenticationService {
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
 
-    public boolean register(UserCredentialsForm request) {
+    public boolean register(final UserCredentialsForm request) {
         var user = new User(request.username(), passwordEncoder.encode(request.password()), Role.USER);
         try {
             repository.save(user);
@@ -37,7 +37,7 @@ public class AuthenticationService {
         }
     }
 
-    public Token authenticate(UserCredentialsForm request) {
+    public Token authenticate(final UserCredentialsForm request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password()));
         var user = repository.findUserByUsername(request.username());

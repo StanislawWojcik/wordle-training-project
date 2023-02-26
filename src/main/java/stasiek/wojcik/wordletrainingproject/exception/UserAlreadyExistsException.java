@@ -2,7 +2,7 @@ package stasiek.wojcik.wordletrainingproject.exception;
 
 public class UserAlreadyExistsException extends Exception {
 
-    public UserAlreadyExistsException(String message) {
+    public UserAlreadyExistsException(final String message) {
         super(message);
     }
 }

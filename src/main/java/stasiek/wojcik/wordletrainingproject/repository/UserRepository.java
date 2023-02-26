@@ -11,5 +11,5 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     // TODO: provide queries for individual rankings?
 
-    Optional<User> findUserByUsername(String username);
+    Optional<User> findUserByUsername(final String username);
 }
