@@ -33,8 +33,8 @@ public class JwtTokenService {
         .setClaims(claims)
         .setSubject(userDetails.getUsername())
         .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 1000)) // TODO: change token expiration time
-        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+        .signWith(getEncryptionKey(), SignatureAlgorithm.HS256)
         .compact();
   }
 
@@ -65,13 +65,13 @@ public class JwtTokenService {
   private Claims extractAllClaims(final String token) {
     return Jwts
         .parserBuilder()
-        .setSigningKey(getSignInKey())
+        .setSigningKey(getEncryptionKey())
         .build()
         .parseClaimsJws(token)
         .getBody();
   }
 
-  private Key getSignInKey() {
+  private Key getEncryptionKey() {
     byte[] keyBytes = Decoders.BASE64.decode(ENCRYPTION_KEY);
     return Keys.hmacShaKeyFor(keyBytes);
   }

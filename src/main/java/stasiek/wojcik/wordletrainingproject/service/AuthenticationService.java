@@ -1,4 +1,4 @@
-package stasiek.wojcik.wordletrainingproject.security;
+package stasiek.wojcik.wordletrainingproject.service;
 
 import stasiek.wojcik.wordletrainingproject.entity.Role;
 import stasiek.wojcik.wordletrainingproject.entity.Token;
@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import stasiek.wojcik.wordletrainingproject.security.JwtTokenService;
 
 @Service
 @RequiredArgsConstructor

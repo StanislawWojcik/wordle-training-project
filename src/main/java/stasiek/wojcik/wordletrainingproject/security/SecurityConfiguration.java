@@ -3,6 +3,7 @@ package stasiek.wojcik.wordletrainingproject.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,8 +22,7 @@ public class SecurityConfiguration {
   @Bean
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
     http
-        .csrf()
-        .disable()
+        .csrf().disable()
         .authorizeHttpRequests()
         .requestMatchers("/register", "/login")
         .permitAll()
@@ -33,7 +33,11 @@ public class SecurityConfiguration {
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
         .authenticationProvider(authenticationProvider)
-        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling()
+            .authenticationEntryPoint((request, response, authException) -> {
+              response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase());
+            });
 
     return http.build();
   }
