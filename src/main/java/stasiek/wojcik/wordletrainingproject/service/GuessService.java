@@ -3,16 +3,13 @@ package stasiek.wojcik.wordletrainingproject.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import stasiek.wojcik.wordletrainingproject.entity.Game;
-import stasiek.wojcik.wordletrainingproject.entity.GuessResponse;
-import stasiek.wojcik.wordletrainingproject.entity.LetterGuessResult;
+import stasiek.wojcik.wordletrainingproject.entity.*;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -20,56 +17,103 @@ public class GuessService {
 
     private final UserRepository repository;
 
+    public Optional<GuessResponse> guess(final String username,
+                                         final String guess) {
+        return repository.findUserByUsername(username)
+                .map(user -> processForValidUser(user, guess));
+    }
 
-    // TODO: change guess response from record to regular object
-    public GuessResponse guess(final String username,
-                               final String guess) {
-        var user = repository.findUserByUsername(username).orElseThrow();
-        var game = user.getGame();
+    private GuessResponse processForValidUser(final User user,
+                                              final String guess) {
+        return Optional.ofNullable(user.getGame())
+                .map(game -> processExistingGame(game, guess, user))
+                .orElse(null);
+    }
+
+    private GuessResponse processExistingGame(final Game game,
+                                              final String guess,
+                                              final User user) {
         List<LetterGuessResult> letterGuessResults = null;
-        if (game != null && game.isGameValid()) {
+        if (game.isGameValid()) {
             game.incrementAttemptsCounter();
             letterGuessResults = processGuess(game, guess);
+            updateKeyboard(letterGuessResults, game.getKeyboard());
             repository.save(user);
-        } else if (game != null && !game.isGameValid()) {
+        } else if (!game.isGameValid()) {
             letterGuessResults = processGuess(game, game.getLastGuess());
         }
-        return letterGuessResults != null ? new GuessResponse(game, letterGuessResults) : null;
+        return new GuessResponse(game, letterGuessResults);
     }
 
     private List<LetterGuessResult> processGuess(final Game game,
                                                  final String guess) {
-        List<LetterGuessResult> resultList = new ArrayList<>();
+        final var word = game.getWord();
+        final var progress = new GameProgress();
         for (int i = 0; i < 5; i++) {
-            if (game.getWord().charAt(i) == guess.charAt(i)) {
-                updateKeyboard(guess.charAt(i), game.getKeyboard(), LetterResult.CORRECT);
-                resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), LetterResult.CORRECT));
-            } else if (game.getWord().contains(String.valueOf(guess.charAt(i)))) {
-                updateKeyboard(guess.charAt(i), game.getKeyboard(), LetterResult.INCORRECT_POSITION);
-                resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), setResult(game.getWord(), guess, guess.charAt(i), i)));
+            if (word.charAt(i) == guess.charAt(i)) {
+                validateCorrectLetter(progress, word, guess, i);
+            } else if (word.contains(String.valueOf(guess.charAt(i)))) {
+                validateIncorrectLetter(progress, word, guess, i);
             } else {
-                updateKeyboard(guess.charAt(i), game.getKeyboard(), LetterResult.ABSENT);
-                resultList.add(new LetterGuessResult(i, String.valueOf(guess.charAt(i)), LetterResult.ABSENT));
+                progress.getAbsent().add(new LetterGuessResult(i, guess.charAt(i), LetterResult.ABSENT));
             }
         }
+        // TODO: fix empty result list!
         updateStatusForWin(game, guess);
-        game.setLastGuess(guess);
-        return resultList;
+        return buildCompleteList(progress.getCorrect(), progress.getMisplaced(), progress.getAbsent());
     }
 
-    private LetterResult setResult(final String word,
-                                   final String guess,
-                                   final char letter,
-                                   final int index) {
-        final int inWord = StringUtils.countOccurrencesOf(word, String.valueOf(letter));
-        final int inGuess = StringUtils.countOccurrencesOf(guess, String.valueOf(letter));
-        if (inWord == inGuess) {
-            return LetterResult.INCORRECT_POSITION;
-        } else if (inWord > inGuess) {
-            return LetterResult.INCORRECT_POSITION;
+    private void validateCorrectLetter(final GameProgress progress,
+                                       final String word,
+                                       final String guess,
+                                       final int index) {
+        final var misplacedLetters = getLettersFromList(progress.getMisplaced(), guess.charAt(index));
+        final var correctLetters = getLettersFromList(progress.getCorrect(), guess.charAt(index));
+        final var misplacedLetter = misplacedLetters.stream().findFirst();
+        final var letterGuessResult = new LetterGuessResult(index, word.charAt(index), LetterResult.CORRECT);
+        if (misplacedLetter.isPresent()) {
+            if (!hasWordMoreLetters(misplacedLetters, correctLetters, word, word.charAt(index))) {
+                progress.getAbsent().add(new LetterGuessResult(misplacedLetter.get().index(),
+                        guess.charAt(index), LetterResult.ABSENT));
+                progress.getMisplaced().remove(misplacedLetter.get());
+            }
+            progress.getCorrect().add(letterGuessResult);
+        } else progress.getCorrect().add(letterGuessResult);
+    }
+
+    private void validateIncorrectLetter(final GameProgress progress,
+                                         final String word,
+                                         final String guess,
+                                         final int index) {
+        final var misplacedLetters = getLettersFromList(progress.getMisplaced(), guess.charAt(index));
+        final var correctLetters = getLettersFromList(progress.getCorrect(), guess.charAt(index));
+        if (hasWordMoreLetters(misplacedLetters, correctLetters, word, guess.charAt(index))) {
+            progress.getMisplaced().add(new LetterGuessResult(index, guess.charAt(index),
+                    LetterResult.INCORRECT_POSITION));
         } else {
-            return guess.indexOf(letter) == index ? LetterResult.INCORRECT_POSITION : LetterResult.ABSENT;
+            progress.getAbsent().add(new LetterGuessResult(index, guess.charAt(index), LetterResult.ABSENT));
         }
+    }
+
+    private boolean hasWordMoreLetters(final List<LetterGuessResult> misplaced,
+                                       final List<LetterGuessResult> correct,
+                                       final String word,
+                                       final char letter) {
+        return misplaced.size() + correct.size() < StringUtils.countOccurrencesOf(word, String.valueOf(letter));
+    }
+
+    private List<LetterGuessResult> getLettersFromList(final List<LetterGuessResult> letters,
+                                                       final char letterAtIndex) {
+        return letters.stream().filter(letter -> letter.letter().equals(letterAtIndex)).toList();
+    }
+
+    private List<LetterGuessResult> buildCompleteList(final List<LetterGuessResult> correct,
+                                                      final List<LetterGuessResult> incorrectPosition,
+                                                      final List<LetterGuessResult> absent) {
+        return Stream.of(correct, incorrectPosition, absent)
+                .flatMap(Collection::stream)
+                .sorted(Comparator.comparing(LetterGuessResult::index))
+                .toList();
     }
 
     private void updateStatusForWin(final Game game,
@@ -81,14 +125,12 @@ public class GuessService {
         }
     }
 
-    private void updateKeyboard(final Character character,
-                                final Map<Character, LetterResult> keyboard,
-                                final LetterResult letterResult) {
-        if (!keyboard.get(character).equals(LetterResult.CORRECT)) {
-            keyboard.replace(character, letterResult);
-        }
+    private void updateKeyboard(final List<LetterGuessResult> resultList,
+                                final Map<Character, LetterResult> keyboard) {
+        resultList.forEach(letter -> {
+            if (!keyboard.get(letter.letter()).equals(LetterResult.CORRECT)) {
+                keyboard.replace(letter.letter(), letter.guessResult());
+            }
+        });
     }
-
-
-
 }
