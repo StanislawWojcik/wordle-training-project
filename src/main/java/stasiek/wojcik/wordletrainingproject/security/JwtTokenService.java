@@ -1,6 +1,7 @@
 package stasiek.wojcik.wordletrainingproject.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -40,7 +41,7 @@ public class JwtTokenService {
 
   public boolean isTokenValid(final String token,
                               final UserDetails userDetails) {
-    final String username = extractUsername(token);
+    final var username = extractUsername(token);
     return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
   }
 
@@ -54,7 +55,7 @@ public class JwtTokenService {
 
   public <T> T extractClaim(final String token,
                             final Function<Claims, T> claimsResolver) {
-    final Claims claims = extractAllClaims(token);
+    final var claims = extractAllClaims(token);
     return claimsResolver.apply(claims);
   }
 
@@ -63,16 +64,20 @@ public class JwtTokenService {
   }
 
   private Claims extractAllClaims(final String token) {
-    return Jwts
-        .parserBuilder()
-        .setSigningKey(getEncryptionKey())
-        .build()
-        .parseClaimsJws(token)
-        .getBody();
+    try {
+      return Jwts
+              .parserBuilder()
+              .setSigningKey(getEncryptionKey())
+              .build()
+              .parseClaimsJws(token)
+              .getBody();
+    } catch (ExpiredJwtException ex) {
+      return ex.getClaims();
+    }
   }
 
   private Key getEncryptionKey() {
-    byte[] keyBytes = Decoders.BASE64.decode(ENCRYPTION_KEY);
+    final var keyBytes = Decoders.BASE64.decode(ENCRYPTION_KEY);
     return Keys.hmacShaKeyFor(keyBytes);
   }
 }
