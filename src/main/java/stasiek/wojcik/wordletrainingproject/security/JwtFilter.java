@@ -1,11 +1,12 @@
 package stasiek.wojcik.wordletrainingproject.security;
 
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,32 +22,35 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-  private final JwtTokenService jwtTokenService;
-  private final UserDetailsService userDetailsService;
+    private final static String HEADER = "Authorization";
+    private final static String PREFIX = "Bearer ";
+    private final static int INDEX = 7;
 
-  @Override
-  protected void doFilterInternal(@NonNull final HttpServletRequest request,
-                                  @NonNull final HttpServletResponse response,
-                                  @NonNull final FilterChain filterChain
-  ) throws ServletException, IOException {
-    final String authHeader = request.getHeader("Authorization");
-    final String jwt;
-    final String username;
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
+    private final JwtTokenService jwtTokenService;
+    private final UserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(@NonNull final HttpServletRequest request,
+                                    @NonNull final HttpServletResponse response,
+                                    @NonNull final FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader(HEADER);
+        final String jwt;
+        if (authHeader == null || !authHeader.startsWith(PREFIX)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        jwt = authHeader.substring(INDEX);
+        final var username = jwtTokenService.extractUsername(jwt);
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if (jwtTokenService.isTokenValid(jwt, userDetails)) {
+                final UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        filterChain.doFilter(request, response);
     }
-    jwt = authHeader.substring(7);
-    username = jwtTokenService.extractUsername(jwt);
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-      if (jwtTokenService.isTokenValid(jwt, userDetails)) {
-        final UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-      }
-    }
-    filterChain.doFilter(request, response);
-  }
 }

@@ -1,3 +1,4 @@
 package stasiek.wojcik.wordletrainingproject.entity;
 
-public record Token(String token) {}
+public record Token(String token) {
+}

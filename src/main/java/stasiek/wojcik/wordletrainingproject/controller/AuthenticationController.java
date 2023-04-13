@@ -5,13 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import stasiek.wojcik.wordletrainingproject.entity.Token;
 import stasiek.wojcik.wordletrainingproject.entity.UserCredentialsForm;
-import stasiek.wojcik.wordletrainingproject.exception.InvalidCredentialsException;
-import stasiek.wojcik.wordletrainingproject.service.AuthenticationService;
+import stasiek.wojcik.wordletrainingproject.security.AuthenticationService;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public final class AuthenticationController {
     public ResponseEntity<Token> authenticateUser(@RequestBody final UserCredentialsForm userCredentialsForm) {
         try {
             return new ResponseEntity<>(authenticationService.authenticate(userCredentialsForm), HttpStatus.OK);
-        } catch (InvalidCredentialsException e) {
+        } catch (UsernameNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
