@@ -1,25 +1,23 @@
 package stasiek.wojcik.wordletrainingproject.entity;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
 
 import java.util.List;
 import java.util.Map;
 
-@Data
-public class GuessResponse {
+public record GuessResponse(int attempts, SessionStatus status, List<LetterGuessResult> guessLetters,
+                            Map<Character, LetterResult> keyboard) {
 
-    private final int attempts;
-    private final SessionStatus status;
-    private final List<LetterGuessResult> guessLetters;
-    private final Map<Character, LetterResult> keyboard;
-
-    public GuessResponse(final Game game, final List<LetterGuessResult> guessLetters) {
-        this.attempts = game.getAttemptsCounter();
-        this.status = game.getStatus();
+    public GuessResponse(@JsonProperty("attempts") final int attempts,
+                         @JsonProperty("status") final SessionStatus status,
+                         @JsonProperty("guessLetters") final List<LetterGuessResult> guessLetters,
+                         @JsonProperty("keyboard") final Map<Character, LetterResult> keyboard) {
+        this.attempts = attempts;
+        this.status = status;
         this.guessLetters = guessLetters;
-        this.keyboard = game.getKeyboard();
+        this.keyboard = keyboard;
     }
 }
 

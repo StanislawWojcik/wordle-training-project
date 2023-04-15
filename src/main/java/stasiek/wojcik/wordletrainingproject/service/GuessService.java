@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 public class GuessService {
 
     private final UserRepository repository;
+    private final GameService gameService;
 
     public Optional<GuessResponse> guess(final String username,
                                          final String guess) {
@@ -25,24 +26,31 @@ public class GuessService {
 
     private GuessResponse processForValidUser(final User user,
                                               final String guess) {
-        return Optional.ofNullable(user.getGame())
-                .map(game -> processExistingGame(game, guess, user))
+        return Optional.of(user.getGame())
+                .map(game -> {
+                    if (isGuessValid(guess)) {
+                        return processExistingGame(game, guess, user);
+                    } else return null;
+                })
                 .orElse(null);
     }
 
     private GuessResponse processExistingGame(final Game game,
                                               final String guess,
                                               final User user) {
-        List<LetterGuessResult> letterGuessResults = null;
-        if (game.isGameValid()) {
-            game.incrementAttemptsCounter();
-            letterGuessResults = processGuess(game, guess);
-            updateKeyboard(letterGuessResults, game.getKeyboard());
-            repository.save(user);
-        } else if (!game.isGameValid()) {
-            letterGuessResults = processGuess(game, game.getLastGuess());
-        }
-        return new GuessResponse(game, letterGuessResults);
+        final var letterGuessResults = game.isGameValid()
+                ? processValidGame(game, guess, user)
+                : processGuess(game, game.getLastGuess());
+        return new GuessResponse(game.getAttemptsCounter(), game.getStatus(), letterGuessResults, game.getKeyboard());
+    }
+
+    private List<LetterGuessResult> processValidGame(final Game game,
+                                                     final String guess,
+                                                     final User user) {
+        game.incrementAttemptsCounter();
+        final var letterGuessResults = processGuess(game, guess);
+        repository.save(user);
+        return letterGuessResults;
     }
 
     private List<LetterGuessResult> processGuess(final Game game,
@@ -60,7 +68,10 @@ public class GuessService {
         }
         // TODO: fix empty result list!
         updateStatusForWin(game, guess);
-        return buildCompleteList(progress.getCorrect(), progress.getMisplaced(), progress.getAbsent());
+        game.setLastGuess(guess);
+        final var completeResultList = buildCompleteList(progress.getCorrect(), progress.getMisplaced(), progress.getAbsent());
+        updateKeyboard(completeResultList, game.getKeyboard());
+        return completeResultList;
     }
 
     private void validateCorrectLetter(final GameProgress progress,
@@ -78,7 +89,9 @@ public class GuessService {
                 progress.getMisplaced().remove(misplacedLetter.get());
             }
             progress.getCorrect().add(letterGuessResult);
-        } else progress.getCorrect().add(letterGuessResult);
+        } else {
+            progress.getCorrect().add(letterGuessResult);
+        }
     }
 
     private void validateIncorrectLetter(final GameProgress progress,
@@ -132,5 +145,11 @@ public class GuessService {
                 keyboard.replace(letter.letter(), letter.guessResult());
             }
         });
+    }
+
+    private boolean isGuessValid(final String guess) {
+        return guess.length() == 5
+                && guess.chars().allMatch(Character::isLetter)
+                && gameService.isOnWordList(guess);
     }
 }

@@ -6,16 +6,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import stasiek.wojcik.wordletrainingproject.entity.Game;
-import stasiek.wojcik.wordletrainingproject.entity.GameProgress;
 import stasiek.wojcik.wordletrainingproject.entity.User;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
