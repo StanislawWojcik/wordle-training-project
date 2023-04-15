@@ -3,7 +3,6 @@ package stasiek.wojcik.wordletrainingproject.security;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,7 +25,7 @@ public class AuthenticationService {
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
 
-    public void register(final UserCredentialsForm request) throws DuplicateKeyException {
+    public void register(final UserCredentialsForm request) {
         final var user = new User(request.username(), passwordEncoder.encode(request.password()), Role.USER);
         repository.save(user);
         logger.info("New user '" + user.getUsername() + "' added to database.");

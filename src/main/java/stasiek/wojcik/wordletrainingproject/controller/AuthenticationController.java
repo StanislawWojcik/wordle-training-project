@@ -2,7 +2,6 @@ package stasiek.wojcik.wordletrainingproject.controller;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,12 +20,8 @@ public final class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerNewUser(@RequestBody final UserCredentialsForm userCredentialsForm) {
-        try {
-            authenticationService.register(userCredentialsForm);
-            return new ResponseEntity<>("User registered.", HttpStatus.OK);
-        } catch (DuplicateKeyException e) {
-            return new ResponseEntity<>("Username already exists.", HttpStatus.CONFLICT);
-        }
+        authenticationService.register(userCredentialsForm);
+        return new ResponseEntity<>("User registered.", HttpStatus.OK);
     }
 
     @PostMapping("/login")
