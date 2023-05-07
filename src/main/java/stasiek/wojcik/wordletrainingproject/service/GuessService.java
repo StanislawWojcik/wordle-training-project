@@ -17,6 +17,7 @@ public class GuessService {
 
     private final UserRepository repository;
     private final GameService gameService;
+    private final WordGenerator wordGenerator;
 
     public Optional<GuessResponse> processGuess(final String username, final String guess) {
         return repository.findUserByUsername(username)
@@ -132,6 +133,6 @@ public class GuessService {
     private boolean isGuessValid(final String guess) {
         return guess.length() == 5
                 && guess.chars().allMatch(Character::isLetter)
-                && gameService.isOnWordList(guess);
+                && wordGenerator.isOnWordList(guess);
     }
 }

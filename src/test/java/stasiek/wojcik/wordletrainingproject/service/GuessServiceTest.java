@@ -26,26 +26,32 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class GuessServiceTest {
 
-    private static List<Character> alphabet;
-    private final static Character[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
     @Mock
     private UserRepository repository;
 
     @Mock
     private GameService gameService;
 
+    @Mock
+    private WordGenerator wordGenerator;
+
+
+    private static List<Character> alphabet;
+    private final static Character[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ClassLoader classLoader = GuessServiceTest.class.getClassLoader();
     private GuessService service;
 
     @BeforeAll
-    static void setup() {
+    static void init() {
         alphabet = Arrays.asList(letters);
     }
 
     @BeforeEach
     void reset() {
-        service = new GuessService(repository, gameService);
+        service = new GuessService(repository, gameService, wordGenerator);
     }
 
     private Map<Character, LetterResult> generateKeyboardMap() {
@@ -65,11 +71,11 @@ public class GuessServiceTest {
         final var game = new Game(guess, "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithWinStatus");
+
         assertFalse(actualResponse.isEmpty());
         assertEquals(expectedResponse, actualResponse.get());
         verify(repository, times(1)).findUserByUsername("username");
@@ -83,11 +89,11 @@ public class GuessServiceTest {
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("IncorrectGuessWithNoCorrectLetters");
+
         assertFalse(actualResponse.isEmpty());
         assertEquals(expectedResponse, actualResponse.get());
         verify(repository, times(1)).findUserByUsername("username");
@@ -101,11 +107,11 @@ public class GuessServiceTest {
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("IncorrectGuessWithCorrectLetters");
+
         assertFalse(actualResponse.isEmpty());
         assertEquals(expectedResponse, actualResponse.get());
         verify(repository, times(1)).findUserByUsername("username");
@@ -119,10 +125,10 @@ public class GuessServiceTest {
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(false);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(false);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
+        final var guessResponse = service.processGuess("username", guess);
 
-        final var guessResponse = service.guess("username", guess);
         assertTrue(guessResponse.isEmpty());
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(0)).save(user);
@@ -135,11 +141,11 @@ public class GuessServiceTest {
         final var game = new Game("guess", guess, 6, generateKeyboardMap(), SessionStatus.FAILED);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithInvalidGameStatus");
+
         assertFalse(actualResponse.isEmpty());
         assertEquals(expectedResponse, actualResponse.get());
         verify(repository, times(1)).findUserByUsername("username");
@@ -154,10 +160,9 @@ public class GuessServiceTest {
         final var game = new Game("guess", guess, 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithMisplacedLetters");
 
         assertFalse(actualResponse.isEmpty());
@@ -173,10 +178,9 @@ public class GuessServiceTest {
         final var game = new Game("xaxax", guess, 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
         user.setGame(game);
 
-        when(gameService.isOnWordList(guess)).thenReturn(true);
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-
-        final var actualResponse = service.guess("username", guess);
+        final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessContainingCorrectAndMisplacedLetters");
 
         assertFalse(actualResponse.isEmpty());
