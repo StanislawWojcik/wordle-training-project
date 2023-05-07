@@ -21,7 +21,7 @@ public final class GuessController {
     @PostMapping("/guess")
     public ResponseEntity<GuessResponse> guess(@RequestBody final GuessRequest guessRequest,
                                                final Principal principal) {
-        return guessService.guess(principal.getName(), guessRequest.guess().toLowerCase())
+        return guessService.processGuess(principal.getName(), guessRequest.guess().toLowerCase())
                 .map(response -> new ResponseEntity<>(response, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY));
     }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +29,13 @@ public final class AuthenticationController {
     public ResponseEntity<Token> authenticateUser(@RequestBody final UserCredentialsForm userCredentialsForm) {
         try {
             return new ResponseEntity<>(authenticationService.authenticate(userCredentialsForm), HttpStatus.OK);
-        } catch (UsernameNotFoundException e) {
+        } catch (final UsernameNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    @GetMapping("/secured")
+    public ResponseEntity<String> secured() {
+        return new ResponseEntity<>("Secured.", HttpStatus.OK);
     }
 }
