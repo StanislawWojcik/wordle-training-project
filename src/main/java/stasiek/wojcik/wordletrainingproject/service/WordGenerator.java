@@ -17,7 +17,9 @@ public class WordGenerator {
     private final List<String> wordList = getWordList();
 
     public String generateWord() {
-        return wordList.get(new Random().nextInt(wordList.size()));
+        var word = wordList.get(new Random().nextInt(wordList.size()));
+        System.out.println("WORD : " + word);
+        return word;
     }
 
     public boolean isOnWordList(final String word) {

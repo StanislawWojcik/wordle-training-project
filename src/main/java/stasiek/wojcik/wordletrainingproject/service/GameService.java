@@ -31,13 +31,13 @@ public class GameService {
     }
 
     private Game startGameForExistingUser(final User user) {
-        final Game game = getGame();
+        final Game game = buildGame();
         user.setGame(game);
         repository.save(user);
         return game;
     }
 
-    private Game getGame() {
+    private Game buildGame() {
         return Game.builder()
                 .attemptsCounter(0)
                 .keyboard(generateKeyboardMap())
