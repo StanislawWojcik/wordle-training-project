@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 public class GuessService {
 
     private final UserRepository repository;
-    private final GameService gameService;
     private final WordGenerator wordGenerator;
 
     public Optional<GuessResponse> processGuess(final String username, final String guess) {

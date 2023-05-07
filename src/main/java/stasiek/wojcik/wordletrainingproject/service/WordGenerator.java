@@ -13,6 +13,7 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class WordGenerator {
 
+    private final static String RESOURCE_LOCATION = "classpath:words";
     private final List<String> wordList = getWordList();
 
     public String generateWord() {
@@ -25,7 +26,7 @@ public class WordGenerator {
 
     private List<String> getWordList() {
         try {
-            final var file = ResourceUtils.getFile("classpath:words");
+            final var file = ResourceUtils.getFile(RESOURCE_LOCATION);
             return Files.readAllLines(file.toPath());
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload word list. Application will not start.");

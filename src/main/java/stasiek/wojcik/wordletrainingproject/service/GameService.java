@@ -31,17 +31,19 @@ public class GameService {
     }
 
     private Game startGameForExistingUser(final User user) {
-        final var word = wordGenerator.generateWord();
-        final var game = Game.builder()
-                .attemptsCounter(0)
-                .keyboard(generateKeyboardMap())
-                .word(word)
-                .status(SessionStatus.IN_PROGRESS)
-                .build();
+        final Game game = getGame();
         user.setGame(game);
-        System.out.println("GENERATED WORD IS : " + word);
         repository.save(user);
         return game;
+    }
+
+    private Game getGame() {
+        return Game.builder()
+                .attemptsCounter(0)
+                .keyboard(generateKeyboardMap())
+                .word(wordGenerator.generateWord())
+                .status(SessionStatus.IN_PROGRESS)
+                .build();
     }
 
     private Map<Character, LetterResult> generateKeyboardMap() {

@@ -30,9 +30,6 @@ public class GuessServiceTest {
     private UserRepository repository;
 
     @Mock
-    private GameService gameService;
-
-    @Mock
     private WordGenerator wordGenerator;
 
 
@@ -51,7 +48,7 @@ public class GuessServiceTest {
 
     @BeforeEach
     void reset() {
-        service = new GuessService(repository, gameService, wordGenerator);
+        service = new GuessService(repository, wordGenerator);
     }
 
     private Map<Character, LetterResult> generateKeyboardMap() {
