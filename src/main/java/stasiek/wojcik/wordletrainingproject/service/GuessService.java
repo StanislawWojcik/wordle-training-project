@@ -1,10 +1,8 @@
 package stasiek.wojcik.wordletrainingproject.service;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.context.WebApplicationContext;
 import stasiek.wojcik.wordletrainingproject.entity.*;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
@@ -14,113 +12,82 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @Service
-@Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+@RequiredArgsConstructor
 public class GuessService {
 
     private final UserRepository repository;
     private final WordGenerator wordGenerator;
 
-    private String guess;
-    private String word;
-    private User user;
-    private Game game;
-    private GameProgress progress;
-    private Map<Character, LetterResult> keyboard;
-    private List<LetterGuessResult> resultList;
-
-
-    public GuessService(UserRepository repository, WordGenerator wordGenerator) {
-        this.repository = repository;
-        this.wordGenerator = wordGenerator;
-    }
-
     public Optional<GuessResponse> processGuess(final String username, final String guess) {
         return repository.findUserByUsername(username)
-                .map(user -> {
-                    this.guess = guess;
-                    this.user = user;
-                    return processGuessForValidUser();
-                });
+                .map(user -> processGuessForValidUser(user, guess));
     }
 
-    private GuessResponse processGuessForValidUser() {
-        return Optional.ofNullable(user.getGame())
+    private GuessResponse processGuessForValidUser(final User user, final String guess) {
+        return Optional.of(user.getGame())
                 .map(game -> {
-                    this.game = game;
-                    this.word = game.getWord();
-                    if (isGuessValid()) {
-                        return processExistingGame();
+                    if (isGuessValid(guess)) {
+                        return processExistingGame(game, guess, user);
                     } else return null;
                 })
                 .orElse(null);
     }
 
-    private GuessResponse processExistingGame() {
-        List<LetterGuessResult> letterGuessResults;
-        if (!game.isGameValid()) {
-            this.guess = game.getLastGuess();
-            letterGuessResults = processGuess();
-        } else {
-            letterGuessResults = processValidGame();
-        }
-
+    private GuessResponse processExistingGame(final Game game, final String guess, final User user) {
+        final var letterGuessResults = game.isGameValid()
+                ? processValidGame(game, guess, user)
+                : processGuess(game, game.getLastGuess());
         return new GuessResponse(game.getAttemptsCounter(), game.getStatus(), letterGuessResults, game.getKeyboard());
     }
 
-    private List<LetterGuessResult> processValidGame() {
+    private List<LetterGuessResult> processValidGame(final Game game, final String guess, final User user) {
         game.incrementAttemptsCounter();
-        final var letterGuessResults = processGuess();
+        final var letterGuessResults = processGuess(game, guess);
         repository.save(user);
         return letterGuessResults;
     }
 
-    private List<LetterGuessResult> processGuess() {
-        this.progress = new GameProgress();
-        iterateOverLetters();
-        updateStatusForWin();
-        game.setLastGuess(guess);
-        this.resultList = buildCompleteList();
-        this.keyboard = game.getKeyboard();
-        updateKeyboard();
-        return resultList;
-    }
-
-    private void iterateOverLetters() {
+    private List<LetterGuessResult> processGuess(final Game game, final String guess) {
+        final var word = game.getWord();
+        final var progress = new GameProgress();
         for (int i = 0; i < 5; i++) {
             if (word.charAt(i) == guess.charAt(i)) {
-                validateCorrectLetter(i);
+                validateCorrectLetter(progress, word, guess, i);
             } else if (word.contains(String.valueOf(guess.charAt(i)))) {
-                validateIncorrectLetter(i);
+                validateIncorrectLetter(progress, word, guess, i);
             } else {
                 progress.getAbsent().add(new LetterGuessResult(i, guess.charAt(i), LetterResult.ABSENT));
             }
         }
+        updateStatusForWin(game, guess);
+        game.setLastGuess(guess);
+        final var completeResultList =
+                buildCompleteList(progress.getCorrect(), progress.getMisplaced(), progress.getAbsent());
+        updateKeyboard(completeResultList, game.getKeyboard());
+        return completeResultList;
     }
 
-    private void validateCorrectLetter(int index) {
+    private void validateCorrectLetter(final GameProgress progress, final String word, final String guess, final int index) {
         final var misplacedLetters = getLettersFromList(progress.getMisplaced(), guess.charAt(index));
         final var correctLetters = getLettersFromList(progress.getCorrect(), guess.charAt(index));
         final var misplacedLetter = misplacedLetters.stream().findFirst();
         final var letterGuessResult = new LetterGuessResult(index, word.charAt(index), LetterResult.CORRECT);
-        final var sumOfMisplacedAndCorrect = misplacedLetters.size() + correctLetters.size();
-        misplacedLetter.ifPresent(letter ->
-                moveLettersBetweenProgressLists(index, misplacedLetter.get(), sumOfMisplacedAndCorrect));
-        progress.getCorrect().add(letterGuessResult);
-    }
-
-    private void moveLettersBetweenProgressLists(int index, LetterGuessResult misplacedLetter, int sumOfMisplacedAndCorrect) {
-        if (!hasWordMoreLetters(sumOfMisplacedAndCorrect, word.charAt(index))) {
-            progress.getAbsent().add(new LetterGuessResult(misplacedLetter.index(),
-                    guess.charAt(index), LetterResult.ABSENT));
-            progress.getMisplaced().remove(misplacedLetter);
+        if (misplacedLetter.isPresent()) {
+            if (!hasWordMoreLetters(misplacedLetters, correctLetters, word, word.charAt(index))) {
+                progress.getAbsent().add(new LetterGuessResult(misplacedLetter.get().index(),
+                        guess.charAt(index), LetterResult.ABSENT));
+                progress.getMisplaced().remove(misplacedLetter.get());
+            }
+            progress.getCorrect().add(letterGuessResult);
+        } else {
+            progress.getCorrect().add(letterGuessResult);
         }
     }
 
-    private void validateIncorrectLetter(int index) {
+    private void validateIncorrectLetter(final GameProgress progress, final String word, final String guess, final int index) {
         final var misplacedLetters = getLettersFromList(progress.getMisplaced(), guess.charAt(index));
         final var correctLetters = getLettersFromList(progress.getCorrect(), guess.charAt(index));
-        final var sumOfMisplacedAndCorrect = misplacedLetters.size() + correctLetters.size();
-        if (hasWordMoreLetters(sumOfMisplacedAndCorrect, guess.charAt(index))) {
+        if (hasWordMoreLetters(misplacedLetters, correctLetters, word, guess.charAt(index))) {
             progress.getMisplaced().add(new LetterGuessResult(index, guess.charAt(index),
                     LetterResult.INCORRECT_POSITION));
         } else {
@@ -128,22 +95,25 @@ public class GuessService {
         }
     }
 
-    private boolean hasWordMoreLetters(final int sumOfMisplacedAndCorrect, final char letter) {
-        return sumOfMisplacedAndCorrect < StringUtils.countOccurrencesOf(word, String.valueOf(letter));
+    private boolean hasWordMoreLetters(final List<LetterGuessResult> misplaced, final List<LetterGuessResult> correct,
+                                       final String word, final char letter) {
+        return misplaced.size() + correct.size() < StringUtils.countOccurrencesOf(word, String.valueOf(letter));
     }
 
     private List<LetterGuessResult> getLettersFromList(final List<LetterGuessResult> letters, final char letterAtIndex) {
         return letters.stream().filter(letter -> letter.letter().equals(letterAtIndex)).toList();
     }
 
-    private List<LetterGuessResult> buildCompleteList() {
-        return Stream.of(progress.getCorrect(), progress.getMisplaced(), progress.getAbsent())
+    private List<LetterGuessResult> buildCompleteList(final List<LetterGuessResult> correct,
+                                                      final List<LetterGuessResult> incorrectPosition,
+                                                      final List<LetterGuessResult> absent) {
+        return Stream.of(correct, incorrectPosition, absent)
                 .flatMap(Collection::stream)
                 .sorted(Comparator.comparing(LetterGuessResult::index))
                 .toList();
     }
 
-    private void updateStatusForWin() {
+    private void updateStatusForWin(final Game game, final String guess) {
         if (game.getWord().equals(guess)) {
             game.setStatus(SessionStatus.WIN);
         } else if (game.getAttemptsCounter() == 6) {
@@ -151,7 +121,7 @@ public class GuessService {
         }
     }
 
-    private void updateKeyboard() {
+    private void updateKeyboard(final List<LetterGuessResult> resultList, final Map<Character, LetterResult> keyboard) {
         resultList.forEach(letter -> {
             if (!keyboard.get(letter.letter()).equals(LetterResult.CORRECT)) {
                 keyboard.replace(letter.letter(), letter.guessResult());
@@ -159,7 +129,7 @@ public class GuessService {
         });
     }
 
-    private boolean isGuessValid() {
+    private boolean isGuessValid(final String guess) {
         return guess.length() == 5
                 && guess.chars().allMatch(Character::isLetter)
                 && wordGenerator.isOnWordList(guess);
