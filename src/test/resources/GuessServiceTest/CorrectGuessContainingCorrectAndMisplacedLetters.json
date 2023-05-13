@@ -1,0 +1,59 @@
+{
+  "attempts": 1,
+  "status": "IN_PROGRESS",
+  "guessLetters": [
+    {
+      "index": 0,
+      "letter": "a",
+      "guessResult": "ABSENT"
+    },
+    {
+      "index": 1,
+      "letter": "x",
+      "guessResult": "INCORRECT_POSITION"
+    },
+    {
+      "index": 2,
+      "letter": "a",
+      "guessResult": "INCORRECT_POSITION"
+    },
+    {
+      "index": 3,
+      "letter": "a",
+      "guessResult": "CORRECT"
+    },
+    {
+      "index": 4,
+      "letter": "a",
+      "guessResult": "ABSENT"
+    }
+  ],
+  "keyboard": {
+    "a": "CORRECT",
+    "b": "NOT_USED",
+    "c": "NOT_USED",
+    "d": "NOT_USED",
+    "e": "NOT_USED",
+    "f": "NOT_USED",
+    "g": "NOT_USED",
+    "h": "NOT_USED",
+    "i": "NOT_USED",
+    "j": "NOT_USED",
+    "k": "NOT_USED",
+    "l": "NOT_USED",
+    "m": "NOT_USED",
+    "n": "NOT_USED",
+    "o": "NOT_USED",
+    "p": "NOT_USED",
+    "q": "NOT_USED",
+    "r": "NOT_USED",
+    "s": "NOT_USED",
+    "t": "NOT_USED",
+    "u": "NOT_USED",
+    "v": "NOT_USED",
+    "w": "NOT_USED",
+    "x": "INCORRECT_POSITION",
+    "y": "NOT_USED",
+    "z": "NOT_USED"
+  }
+}

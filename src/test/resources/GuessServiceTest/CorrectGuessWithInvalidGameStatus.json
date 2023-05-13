@@ -1,0 +1,59 @@
+{
+  "attempts": 6,
+  "status": "FAILED",
+  "guessLetters": [
+    {
+      "index": 0,
+      "letter": "g",
+      "guessResult": "CORRECT"
+    },
+    {
+      "index": 1,
+      "letter": "x",
+      "guessResult": "ABSENT"
+    },
+    {
+      "index": 2,
+      "letter": "x",
+      "guessResult": "ABSENT"
+    },
+    {
+      "index": 3,
+      "letter": "x",
+      "guessResult": "ABSENT"
+    },
+    {
+      "index": 4,
+      "letter": "s",
+      "guessResult": "CORRECT"
+    }
+  ],
+  "keyboard": {
+    "a": "NOT_USED",
+    "b": "NOT_USED",
+    "c": "NOT_USED",
+    "d": "NOT_USED",
+    "e": "NOT_USED",
+    "f": "NOT_USED",
+    "g": "CORRECT",
+    "h": "NOT_USED",
+    "i": "NOT_USED",
+    "j": "NOT_USED",
+    "k": "NOT_USED",
+    "l": "NOT_USED",
+    "m": "NOT_USED",
+    "n": "NOT_USED",
+    "o": "NOT_USED",
+    "p": "NOT_USED",
+    "q": "NOT_USED",
+    "r": "NOT_USED",
+    "s": "CORRECT",
+    "t": "NOT_USED",
+    "u": "NOT_USED",
+    "v": "NOT_USED",
+    "w": "NOT_USED",
+    "x": "ABSENT",
+    "y": "NOT_USED",
+    "z": "NOT_USED"
+  }
+}
