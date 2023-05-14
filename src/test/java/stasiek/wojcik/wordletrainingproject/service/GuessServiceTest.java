@@ -13,6 +13,8 @@ import stasiek.wojcik.wordletrainingproject.entity.Role;
 import stasiek.wojcik.wordletrainingproject.entity.User;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
+import stasiek.wojcik.wordletrainingproject.exception.InvalidGuessException;
+import stasiek.wojcik.wordletrainingproject.exception.NoGameFoundException;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
 import java.io.File;
@@ -62,7 +64,7 @@ public class GuessServiceTest {
     }
 
     @Test
-    void shouldReturnProperResponseForCorrectWord() throws IOException {
+    void shouldReturnProperResponseForCorrectWord() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "guess";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game(guess, "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -73,14 +75,13 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithWinStatus");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(1)).save(user);
     }
 
     @Test
-    void shouldReturnProperResponseForIncorrectWordWithNoCorrectLetters() throws IOException {
+    void shouldReturnProperResponseForIncorrectWordWithNoCorrectLetters() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "incor";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -91,14 +92,14 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("IncorrectGuessWithNoCorrectLetters");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(1)).save(user);
     }
 
     @Test
-    void shouldReturnProperResponseForIncorrectWordWithCorrectLetters() throws IOException {
+    void shouldReturnProperResponseForIncorrectWordWithCorrectLetters() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "gxxxs";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -109,14 +110,13 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("IncorrectGuessWithCorrectLetters");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(1)).save(user);
     }
 
     @Test
-    void shouldReturnEmptyOptionalForInvalidWord() {
+    void shouldThrowInvalidGuessExceptionForInvalidWordProvided() throws NoGameFoundException, InvalidGuessException {
         final var guess = "inval";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -124,15 +124,27 @@ public class GuessServiceTest {
 
         when(wordGenerator.isOnWordList(guess)).thenReturn(false);
         when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
-        final var guessResponse = service.processGuess("username", guess);
 
-        assertTrue(guessResponse.isEmpty());
+        assertThrows(InvalidGuessException.class, () -> service.processGuess("username", guess));
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(0)).save(user);
     }
 
     @Test
-    void shouldReturnProperResponseForIncorrectWordWithCorrectLettersForInvalidGameStatus() throws IOException {
+    void shouldThrowNoGameFoundExceptionForUserWithoutAnyGameStarted() {
+        final var guess = "inval";
+        final var user = new User("username", "password", Role.USER);
+
+        when(wordGenerator.isOnWordList(guess)).thenReturn(true);
+        when(repository.findUserByUsername("username")).thenReturn(Optional.of(user));
+
+        assertThrows(NoGameFoundException.class, () -> service.processGuess("username", guess));
+        verify(repository, times(1)).findUserByUsername("username");
+        verify(repository, times(0)).save(user);
+    }
+
+    @Test
+    void shouldReturnProperResponseForIncorrectWordWithCorrectLettersForInvalidGameStatus() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "gxxxs";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", guess, 6, generateKeyboardMap(), SessionStatus.FAILED);
@@ -143,15 +155,14 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithInvalidGameStatus");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(0)).save(user);
     }
 
 
     @Test
-    void shouldReturnProperResponseForCorrectWordWithMisplacedLetters() throws IOException {
+    void shouldReturnProperResponseForCorrectWordWithMisplacedLetters() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "xssgx";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", guess, 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -162,14 +173,13 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessWithMisplacedLetters");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(1)).save(user);
     }
 
     @Test
-    void shouldReturnProperResponseForCorrectWordWithLetterUsedMultipleTimesInCorrectAndMisplacedPosition() throws IOException {
+    void shouldReturnProperResponseForCorrectWordWithLetterUsedMultipleTimesInCorrectAndMisplacedPosition() throws IOException, NoGameFoundException, InvalidGuessException {
         final var guess = "axaaa";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("xaxax", guess, 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
@@ -180,8 +190,7 @@ public class GuessServiceTest {
         final var actualResponse = service.processGuess("username", guess);
         final var expectedResponse = importGuessResponse("CorrectGuessContainingCorrectAndMisplacedLetters");
 
-        assertFalse(actualResponse.isEmpty());
-        assertEquals(expectedResponse, actualResponse.get());
+        assertEquals(expectedResponse, actualResponse);
         verify(repository, times(1)).findUserByUsername("username");
         verify(repository, times(1)).save(user);
     }

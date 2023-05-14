@@ -59,6 +59,11 @@ class GuessControllerTest extends BaseIntegrationTest {
         userRepository.save(user);
     }
 
+    private void insertUserWithoutGame() {
+        user = new User("user", "password", Role.USER);
+        userRepository.save(user);
+    }
+
     private Map<Character, LetterResult> generateKeyboardMap() {
         return ALPHABET.stream().collect(Collectors.toMap(value -> value, value -> NOT_USED));
     }
@@ -151,5 +156,39 @@ class GuessControllerTest extends BaseIntegrationTest {
         final var user = userRepository.findUserByUsername("user");
         final var game = user.map(User::getGame).orElseThrow();
         assertEquals(6, game.getAttemptsCounter());
+    }
+
+    @Test
+    @WithMockUser
+    void shouldReturn404ForUserWithoutGame() throws Exception {
+        insertUserWithoutGame();
+        final var guessRequest = new GuessRequest("apple");
+        final var principal = mock(Principal.class);
+
+        final var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/guess")
+                        .content(objectMapper.writeValueAsString(guessRequest))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .principal(principal))
+                .andExpect(status().is(404))
+                .andReturn();
+
+        assertEquals("User haven't started any games yet.", mvcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    @WithMockUser
+    void shouldReturn406ForInvalidInputProvided() throws Exception {
+        insertUserWithoutGame();
+        final var guessRequest = new GuessRequest("11aa1");
+        final var principal = mock(Principal.class);
+
+        final var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/guess")
+                        .content(objectMapper.writeValueAsString(guessRequest))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .principal(principal))
+                .andExpect(status().is(406))
+                .andReturn();
+
+        assertEquals("Invalid input provided.", mvcResult.getResponse().getContentAsString());
     }
 }

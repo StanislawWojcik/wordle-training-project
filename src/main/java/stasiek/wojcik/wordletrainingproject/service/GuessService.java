@@ -1,11 +1,14 @@
 package stasiek.wojcik.wordletrainingproject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import stasiek.wojcik.wordletrainingproject.entity.*;
 import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
+import stasiek.wojcik.wordletrainingproject.exception.InvalidGuessException;
+import stasiek.wojcik.wordletrainingproject.exception.NoGameFoundException;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
 import java.util.*;
@@ -18,15 +21,19 @@ public class GuessService {
     private final UserRepository repository;
     private final WordGenerator wordGenerator;
 
-    public Optional<GuessResponse> processGuess(final String username, final String guess) {
-        return repository.findUserByUsername(username)
-                .map(user -> isGuessValid(guess) && user.getGame() != null
-                        ? processExistingGame(user, guess)
-                        : null);
+    public GuessResponse processGuess(final String username, final String guess) throws InvalidGuessException, NoGameFoundException {
+        final var user = repository.findUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+        if (isGuessValid(guess)) {
+            return processExistingGame(user, guess);
+        } else {
+            throw new InvalidGuessException("Invalid input provided.");
+        }
     }
 
-    private GuessResponse processExistingGame(final User user, final String guess) {
-        final var game = user.getGame();
+    private GuessResponse processExistingGame(final User user, final String guess) throws NoGameFoundException {
+        final var game = Optional.ofNullable(user.getGame())
+                .orElseThrow(() -> new NoGameFoundException("No game found."));
         final var letterGuessResults = game.isGameValid()
                 ? processValidGame(user, guess)
                 : processGuess(game, game.getLastGuess());
