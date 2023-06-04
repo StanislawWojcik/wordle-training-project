@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,7 +36,7 @@ public class GuessServiceTest {
     private WordGenerator wordGenerator;
 
 
-    private static List<Character> alphabet;
+    private static Set<Character> alphabet;
     private final static Character[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
 
@@ -45,7 +46,7 @@ public class GuessServiceTest {
 
     @BeforeAll
     static void init() {
-        alphabet = Arrays.asList(letters);
+        alphabet = Set.of(letters);
     }
 
     @BeforeEach
@@ -116,7 +117,7 @@ public class GuessServiceTest {
     }
 
     @Test
-    void shouldThrowInvalidGuessExceptionForInvalidWordProvided() throws NoGameFoundException, InvalidGuessException {
+    void shouldThrowInvalidGuessExceptionForInvalidWordProvided() {
         final var guess = "inval";
         final var user = new User("username", "password", Role.USER);
         final var game = new Game("guess", "", 0, generateKeyboardMap(), SessionStatus.IN_PROGRESS);
