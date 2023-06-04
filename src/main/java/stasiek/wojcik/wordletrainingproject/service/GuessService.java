@@ -35,13 +35,12 @@ public class GuessService {
         final var game = Optional.ofNullable(user.getGame())
                 .orElseThrow(() -> new NoGameFoundException("No game found."));
         final var letterGuessResults = game.isGameValid()
-                ? processValidGame(user, guess)
+                ? processValidGame(user, guess, game)
                 : processGuess(game, game.getLastGuess());
         return new GuessResponse(game.getAttemptsCounter(), game.getStatus(), letterGuessResults, game.getKeyboard());
     }
 
-    private List<LetterGuessResult> processValidGame(final User user, final String guess) {
-        final var game = user.getGame();
+    private List<LetterGuessResult> processValidGame(final User user, final String guess, final Game game) {
         game.incrementAttemptsCounter();
         final var letterGuessResults = processGuess(game, guess);
         repository.save(user);

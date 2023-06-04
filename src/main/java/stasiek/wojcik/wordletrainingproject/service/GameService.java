@@ -10,9 +10,9 @@ import stasiek.wojcik.wordletrainingproject.entity.result.LetterResult;
 import stasiek.wojcik.wordletrainingproject.entity.result.SessionStatus;
 import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,7 +23,7 @@ public class GameService {
     private final WordGenerator wordGenerator;
 
     @Value("${alphabet}")
-    private final List<Character> ALPHABET;
+    private final Set<Character> ALPHABET;
 
     public Optional<Game> startNewGame(final String username) {
         return repository.findUserByUsername(username)
