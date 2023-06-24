@@ -4,7 +4,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,20 +16,22 @@ import java.util.function.Function;
 @Service
 public class JwtTokenService {
 
-    // TODO: move it somewhere?
-    @Value("${encryption.key}")
-    private String ENCRYPTION_KEY;
+    private final String ENCRYPTION_KEY;
 
-    public String generateToken(final UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public JwtTokenService(final EncryptionKeyLoader encryptionKeyLoader) {
+        this.ENCRYPTION_KEY = encryptionKeyLoader.loadClientSecret();
+    }
+
+    public String generateToken(final String username) {
+        return generateToken(new HashMap<>(), username);
     }
 
     public String generateToken(final Map<String, Object> claims,
-                                final UserDetails userDetails) {
+                                final String username) {
         return Jwts
                 .builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getEncryptionKey(), SignatureAlgorithm.HS256)

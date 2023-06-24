@@ -32,11 +32,10 @@ public class AuthenticationService {
     }
 
     public Token authenticate(final UserCredentialsForm request) throws UsernameNotFoundException {
-        authenticationManager
+        final var authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
-        final var user = repository.findUserByUsername(request.username());
-        return user
-                .map(existingUser -> new Token(jwtTokenService.generateToken(existingUser)))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+        if (authentication.isAuthenticated()) {
+            return new Token(jwtTokenService.generateToken(request.username()));
+        } else throw new UsernameNotFoundException("User not found.");
     }
 }

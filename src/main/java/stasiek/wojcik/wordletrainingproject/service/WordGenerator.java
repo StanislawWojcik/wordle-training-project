@@ -28,7 +28,7 @@ public class WordGenerator {
         try {
             final var file = ResourceUtils.getFile(RESOURCE_LOCATION);
             return Files.readAllLines(file.toPath());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Failed to upload word list. Application will not start.");
         }
     }
