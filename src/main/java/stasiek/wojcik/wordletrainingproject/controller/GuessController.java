@@ -1,5 +1,7 @@
 package stasiek.wojcik.wordletrainingproject.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +18,13 @@ import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
+@SecurityRequirement(name = "wordle-training-project")
 public final class GuessController {
 
     private final GuessService guessService;
 
     @PostMapping("/guess")
+    @Operation(summary = "Processes provided guess.")
     public ResponseEntity<GuessResponse> guess(@RequestBody final GuessRequest guessRequest, final Principal principal)
             throws NoGameFoundException, InvalidGuessException {
         final var guessResponse = guessService.processGuess(principal.getName(), guessRequest.guess().toLowerCase());

@@ -1,6 +1,7 @@
 package stasiek.wojcik.wordletrainingproject.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +21,14 @@ public final class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
+    @Operation(summary = "Registers new user.")
     public ResponseEntity<String> registerNewUser(@RequestBody final UserCredentialsForm userCredentialsForm) {
         authenticationService.register(userCredentialsForm);
         return new ResponseEntity<>("User registered.", HttpStatus.OK);
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Returns a new authentication token for given credentials.")
     public ResponseEntity<Token> authenticateUser(@RequestBody final UserCredentialsForm userCredentialsForm) {
         try {
             return new ResponseEntity<>(authenticationService.authenticate(userCredentialsForm), HttpStatus.OK);
@@ -34,6 +37,7 @@ public final class AuthenticationController {
         }
     }
 
+    @Operation(summary = "Testing purposes only.", hidden = true)
     @GetMapping("/secured")
     public ResponseEntity<String> secured() {
         return new ResponseEntity<>("Secured.", HttpStatus.OK);
