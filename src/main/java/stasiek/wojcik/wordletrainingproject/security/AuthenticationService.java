@@ -1,8 +1,7 @@
 package stasiek.wojcik.wordletrainingproject.security;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,9 +15,9 @@ import stasiek.wojcik.wordletrainingproject.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
-    private final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
@@ -28,7 +27,7 @@ public class AuthenticationService {
     public void register(final UserCredentialsForm request) {
         final var user = new User(request.username(), passwordEncoder.encode(request.password()), Role.USER);
         repository.save(user);
-        logger.info("New user '" + user.getUsername() + "' added to database.");
+        log.info("New user '" + user.getUsername() + "' added to database.");
     }
 
     public Token authenticate(final UserCredentialsForm request) throws UsernameNotFoundException {
