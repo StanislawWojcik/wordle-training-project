@@ -158,4 +158,3 @@ Response:
 
 To run tests user has to have Docker Desktop up and running as it will be used by TestContainers to start independent instance of db.
 
-
